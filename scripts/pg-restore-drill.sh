@@ -16,7 +16,7 @@ metadata: { name: drill-$(date +%s), namespace: $NS }
 spec: { cluster: { name: pg-main } }
 YAML
 echo "Waiting for backup to complete..."
-for i in $(seq 1 60); do
+for _ in $(seq 1 60); do
   P=$(kubectl -n $NS get backup -o jsonpath='{.items[-1:].status.phase}')
   [ "$P" = "completed" ] && break; sleep 5
 done
