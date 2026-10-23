@@ -55,13 +55,13 @@ make down
 
 ## Failure scenarios tested
 
-| Scenario | Expected result | How tested |
-|---|---|---|
-| Postgres primary pod deleted | Replica promoted automatically, writes resume | `scripts/failover-test.sh` |
-| Data loss / corruption | Restore from S3 backup into a new cluster, marker row verified | `scripts/pg-restore-drill.sh` |
-| RabbitMQ node lost | Quorum queues stay available, node rejoins | `scripts/failover-test.sh` |
-| Backups stop | `PostgresBackupStale` fires after 26h | `platform/alerts.yaml` |
-| Consumers stop | `RabbitMQQueueBacklog` fires above 1000 ready messages | `platform/alerts.yaml` |
+| Scenario | Expected result | How tested | Measured in CI |
+|---|---|---|---|
+| Postgres primary pod deleted | Replica promoted automatically, writes resume | `scripts/failover-test.sh` | new primary in **4s** |
+| Data loss / corruption | Restore from S3 backup into a new cluster, marker row verified | `scripts/pg-restore-drill.sh` | RTO **34s** (small lab dataset) |
+| RabbitMQ node lost | Quorum queues stay available, node rejoins | `scripts/failover-test.sh` | node rejoined |
+| Backups stop | `PostgresBackupStale` fires after 26h | `platform/alerts.yaml` | rule loaded |
+| Consumers stop | `RabbitMQQueueBacklog` fires above 1000 ready messages | `platform/alerts.yaml` | rule loaded |
 
 ## Runbooks
 - [Postgres backup stale / restore](runbooks/postgres-restore.md)
