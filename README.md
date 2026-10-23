@@ -33,7 +33,7 @@ flowchart LR
 | Component | How it runs | What it demonstrates |
 |---|---|---|
 | PostgreSQL 16 | CloudNativePG operator, 3 instances, pod anti-affinity | Streaming replication, automated failover, WAL archiving, nightly base backups, point-in-time restore |
-| RabbitMQ 3.13 | RabbitMQ Cluster Operator, 3 nodes | Quorum queues (survive 1 node loss), `pause_minority` partition handling, memory watermark |
+| RabbitMQ | RabbitMQ Cluster Operator, 3 nodes (operator-pinned version) | Quorum queues (survive 1 node loss), memory watermark derived from the pod limit |
 | Redis 7.4 | Hand-written StatefulSet (no operator) | volumeClaimTemplates, headless Service, probes, AOF persistence, PodDisruptionBudget, exporter sidecar |
 | cert-manager | Helm | Issues the TLS certificates for the RabbitMQ operator's admission webhooks |
 | SeaweedFS | Deployment + PVC | S3-compatible backup target (stands in for AWS S3) |

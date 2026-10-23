@@ -7,17 +7,15 @@ metadata:
   namespace: messaging
 spec:
   replicas: 3
-  image: rabbitmq:3.13-management
+  # image omitted on purpose: the operator pins a RabbitMQ version it is tested with
   persistence:
     storage: 2Gi
   resources:
-    requests: { cpu: 100m, memory: 512Mi }
-    limits: { memory: 1Gi }
+    requests: { cpu: 200m, memory: 1Gi }
+    limits: { memory: 2Gi }
   rabbitmq:
     additionalConfig: |
       default_queue_type = quorum
-      vm_memory_high_watermark.relative = 0.6
-      cluster_partition_handling = pause_minority
   affinity:
     podAntiAffinity:
       preferredDuringSchedulingIgnoredDuringExecution:
