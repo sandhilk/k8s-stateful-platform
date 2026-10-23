@@ -35,6 +35,7 @@ flowchart LR
 | PostgreSQL 16 | CloudNativePG operator, 3 instances, pod anti-affinity | Streaming replication, automated failover, WAL archiving, nightly base backups, point-in-time restore |
 | RabbitMQ 3.13 | RabbitMQ Cluster Operator, 3 nodes | Quorum queues (survive 1 node loss), `pause_minority` partition handling, memory watermark |
 | Redis 7.4 | Hand-written StatefulSet (no operator) | volumeClaimTemplates, headless Service, probes, AOF persistence, PodDisruptionBudget, exporter sidecar |
+| cert-manager | Helm | Issues the TLS certificates for the RabbitMQ operator's admission webhooks |
 | MinIO | Deployment + PVC | S3-compatible backup target (stands in for AWS S3) |
 | Observability | kube-prometheus-stack | Alerts on replication lag, stale backups, queue backlog, memory alarm, Redis down/memory; each alert links a runbook |
 | IaC / CI | Makefile, Terraform (kind + Helm), GitHub Actions | Lint (yamllint, shellcheck, kubeconform, terraform validate) + full e2e on every push |

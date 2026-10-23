@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 CLUSTER ?= stateful-platform
 CNPG_VERSION ?= 0.22.1
+CERT_MANAGER_VERSION ?= v1.16.1
 KPS_VERSION ?= 65.1.1
 
 .PHONY: up cluster deploy platform operators data test drill chaos grafana down lint
@@ -19,7 +20,10 @@ platform:                     ## Prometheus, Grafana, Alertmanager + CRDs
 	helm upgrade --install kps prometheus-community/kube-prometheus-stack --version $(KPS_VERSION) \
 	  -n monitoring --create-namespace -f platform/kube-prometheus-stack-values.yaml --wait --timeout 10m
 
-operators:                    ## CloudNativePG + RabbitMQ Cluster Operator
+operators:                    ## cert-manager, CloudNativePG, RabbitMQ Cluster Operator
+	helm repo add jetstack https://charts.jetstack.io >/dev/null && helm repo update >/dev/null
+	helm upgrade --install cert-manager jetstack/cert-manager --version $(CERT_MANAGER_VERSION) \
+	  -n cert-manager --create-namespace --set crds.enabled=true --wait
 	helm upgrade --install cnpg cnpg/cloudnative-pg --version $(CNPG_VERSION) -n cnpg-system --create-namespace --wait
 	kubectl apply -f https://github.com/rabbitmq/cluster-operator/releases/latest/download/cluster-operator.yml
 	kubectl -n rabbitmq-system rollout status deploy/rabbitmq-cluster-operator --timeout=300s
