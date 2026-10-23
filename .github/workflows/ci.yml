@@ -1,0 +1,50 @@
+name: ci
+on:
+  push: { branches: [main] }
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: yamllint
+        run: pip install yamllint && yamllint -d relaxed manifests platform kind
+      - name: shellcheck
+        run: shellcheck -S warning scripts/*.sh
+      - name: kubeconform
+        run: |
+          curl -sSL https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz | tar xz
+          ./kubeconform -strict -summary -ignore-missing-schemas \
+            -schema-location default \
+            -schema-location 'https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json' \
+            manifests platform/alerts.yaml
+      - name: terraform validate
+        uses: hashicorp/setup-terraform@v3
+      - run: cd terraform && terraform init -backend=false && terraform validate
+
+  e2e:
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: helm/kind-action@v1
+        with:
+          config: kind/cluster.yaml
+          cluster_name: stateful-platform
+      - name: deploy platform + data services
+        run: make deploy
+      - name: smoke test
+        run: make test
+      - name: backup / restore drill
+        run: make drill
+      - name: failover test
+        run: make chaos
+      - name: debug on failure
+        if: failure()
+        run: |
+          kubectl get pods -A
+          kubectl -n data describe cluster pg-main || true
+          kubectl get events -A --sort-by=.lastTimestamp | tail -50

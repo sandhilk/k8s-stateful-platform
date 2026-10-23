@@ -1,0 +1,53 @@
+# 3-instance PostgreSQL cluster managed by the CloudNativePG operator:
+# streaming replication, automated failover, WAL archiving and base backups to S3 (MinIO).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-main
+  namespace: data
+spec:
+  instances: 3
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 2Gi
+  postgresql:
+    parameters:
+      max_connections: "200"
+      shared_buffers: "128MB"
+      log_min_duration_statement: "500"
+  bootstrap:
+    initdb:
+      database: app
+      owner: app
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+  monitoring:
+    enablePodMonitor: true
+  backup:
+    retentionPolicy: "7d"
+    barmanObjectStore:
+      destinationPath: s3://pg-backups/pg-main
+      endpointURL: http://minio.data.svc:9000
+      s3Credentials:
+        accessKeyId: { name: minio-creds, key: ACCESS_KEY_ID }
+        secretAccessKey: { name: minio-creds, key: ACCESS_SECRET_KEY }
+      wal:
+        compression: gzip
+      data:
+        compression: gzip
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 512Mi }
+---
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: pg-main-nightly
+  namespace: data
+spec:
+  schedule: "0 0 2 * * *"   # 02:00 daily (CNPG cron has a seconds field)
+  backupOwnerReference: self
+  cluster:
+    name: pg-main

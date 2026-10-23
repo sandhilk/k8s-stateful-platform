@@ -1,0 +1,25 @@
+# Restore drill: bootstraps a NEW cluster from pg-main's backups in object storage.
+# Proves backups are restorable (an untested backup is not a backup).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg-restore-drill
+  namespace: data
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.4
+  storage:
+    size: 2Gi
+  bootstrap:
+    recovery:
+      source: pg-main
+  externalClusters:
+    - name: pg-main
+      barmanObjectStore:
+        destinationPath: s3://pg-backups/pg-main
+        endpointURL: http://minio.data.svc:9000
+        s3Credentials:
+          accessKeyId: { name: minio-creds, key: ACCESS_KEY_ID }
+          secretAccessKey: { name: minio-creds, key: ACCESS_SECRET_KEY }
+        wal:
+          maxParallel: 4

@@ -1,0 +1,38 @@
+# Lightweight monitoring stack for a laptop / CI cluster.
+# Selector overrides let Prometheus pick up PodMonitors and ServiceMonitors from every namespace.
+prometheus:
+  prometheusSpec:
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 2d
+    resources:
+      requests: { cpu: 100m, memory: 400Mi }
+alertmanager:
+  enabled: true
+grafana:
+  adminPassword: change-me-local-only
+  defaultDashboardsEnabled: true
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: stateful
+          folder: Stateful Services
+          type: file
+          options: { path: /var/lib/grafana/dashboards/stateful }
+  dashboards:
+    stateful:
+      cloudnative-pg:
+        gnetId: 20417
+        datasource: Prometheus
+      rabbitmq-overview:
+        gnetId: 10991
+        datasource: Prometheus
+      redis:
+        gnetId: 763
+        datasource: Prometheus
+kubeEtcd: { enabled: false }
+kubeControllerManager: { enabled: false }
+kubeScheduler: { enabled: false }
+kubeProxy: { enabled: false }

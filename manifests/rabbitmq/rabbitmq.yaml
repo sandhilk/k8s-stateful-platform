@@ -1,0 +1,48 @@
+# 3-node RabbitMQ cluster managed by the RabbitMQ Cluster Operator.
+# Quorum queues by default, so messages survive the loss of a node.
+apiVersion: rabbitmq.com/v1beta1
+kind: RabbitmqCluster
+metadata:
+  name: mq
+  namespace: messaging
+spec:
+  replicas: 3
+  image: rabbitmq:3.13-management
+  persistence:
+    storage: 2Gi
+  resources:
+    requests: { cpu: 100m, memory: 512Mi }
+    limits: { memory: 1Gi }
+  rabbitmq:
+    additionalConfig: |
+      default_queue_type = quorum
+      vm_memory_high_watermark.relative = 0.6
+      cluster_partition_handling = pause_minority
+  affinity:
+    podAntiAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - weight: 100
+          podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels: { app.kubernetes.io/name: mq }
+---
+# rabbitmq_prometheus is enabled by the operator on port 15692.
+# detailed metrics give per-queue depth for the backlog alert.
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: rabbitmq
+  namespace: messaging
+spec:
+  selector:
+    matchLabels: { app.kubernetes.io/component: rabbitmq }
+  podMetricsEndpoints:
+    - port: prometheus
+      path: /metrics/detailed
+      params:
+        family: ["queue_coarse_metrics", "queue_metrics"]
+      interval: 30s
+    - port: prometheus
+      path: /metrics
+      interval: 30s
