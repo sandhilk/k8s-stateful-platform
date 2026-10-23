@@ -30,6 +30,8 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - name: check images exist
+        run: ./scripts/ci-run.sh ./scripts/check-images.sh
       - uses: helm/kind-action@v1
         with:
           config: kind/cluster.yaml

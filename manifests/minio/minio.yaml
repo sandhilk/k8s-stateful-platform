@@ -33,7 +33,7 @@ spec:
     spec:
       containers:
         - name: minio
-          image: quay.io/minio/minio:RELEASE.2024-10-13T13-34-11Z
+          image: docker.io/minio/minio:RELEASE.2024-10-13T13-34-11Z
           args: ["server", "/data", "--console-address", ":9001"]
           env:
             - name: MINIO_ROOT_USER
@@ -74,7 +74,7 @@ spec:
       restartPolicy: OnFailure
       containers:
         - name: mc
-          image: quay.io/minio/mc:RELEASE.2024-10-08T09-37-26Z
+          image: docker.io/minio/mc:RELEASE.2024-10-08T09-37-26Z
           env:
             - name: AK
               valueFrom: { secretKeyRef: { name: minio-creds, key: ACCESS_KEY_ID } }
