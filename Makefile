@@ -30,9 +30,9 @@ operators:                    ## cert-manager, CloudNativePG, RabbitMQ Cluster O
 
 data:                         ## stateful workloads + alert rules
 	kubectl apply -f manifests/namespaces/
-	kubectl apply -f manifests/minio/
-	kubectl -n data rollout status deploy/minio --timeout=300s
-	kubectl -n data wait --for=condition=complete job/minio-create-bucket --timeout=300s
+	kubectl apply -f manifests/object-store/
+	kubectl -n data rollout status deploy/s3 --timeout=300s
+	kubectl -n data wait --for=condition=complete job/s3-create-bucket --timeout=300s
 	kubectl apply -f manifests/postgres/cluster.yaml
 	kubectl apply -f manifests/rabbitmq/
 	kubectl apply -f manifests/redis/

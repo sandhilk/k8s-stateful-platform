@@ -9,11 +9,11 @@ kubectl -n data get cluster pg-main            # phase, ready instances, primary
 kubectl -n data get backups --sort-by=.metadata.creationTimestamp | tail -5
 kubectl cnpg status pg-main -n data            # if the cnpg kubectl plugin is installed
 ```
-- Is the object store reachable? `kubectl -n data get pods -l app=minio`
+- Is the object store reachable? `kubectl -n data get pods -l app=s3`
 - Is WAL archiving failing? look for `ContinuousArchiving` condition = False in `kubectl -n data describe cluster pg-main`
 
 ## 2. Backup stale — fix
-1. Check credentials secret `minio-creds` and bucket `pg-backups` exist.
+1. Check credentials secret `s3-creds` and bucket `pg-backups` exist.
 2. Trigger an on-demand backup and watch it:
    `kubectl -n data apply -f - <<< '{"apiVersion":"postgresql.cnpg.io/v1","kind":"Backup","metadata":{"name":"manual-'$(date +%s)'"},"spec":{"cluster":{"name":"pg-main"}}}'`
 3. Alert clears when `cnpg_collector_last_available_backup_timestamp` updates.

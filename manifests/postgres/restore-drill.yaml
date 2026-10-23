@@ -17,9 +17,9 @@ spec:
     - name: pg-main
       barmanObjectStore:
         destinationPath: s3://pg-backups/pg-main
-        endpointURL: http://minio.data.svc:9000
+        endpointURL: http://s3.data.svc:8333
         s3Credentials:
-          accessKeyId: { name: minio-creds, key: ACCESS_KEY_ID }
-          secretAccessKey: { name: minio-creds, key: ACCESS_SECRET_KEY }
+          accessKeyId: { name: s3-creds, key: ACCESS_KEY_ID }
+          secretAccessKey: { name: s3-creds, key: ACCESS_SECRET_KEY }
         wal:
           maxParallel: 4

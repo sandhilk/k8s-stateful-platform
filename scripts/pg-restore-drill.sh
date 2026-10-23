@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Backup + restore drill: write a marker row, take an on-demand backup to S3 (MinIO),
+# Backup + restore drill: write a marker row, take an on-demand backup to S3 (SeaweedFS),
 # restore into a brand-new cluster, and verify the marker exists. Prints the measured RTO.
 set -euo pipefail
 NS=data; MARK="drill-$(date +%s)"

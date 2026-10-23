@@ -1,6 +1,6 @@
 # k8s-stateful-platform
 
-A production-style **stateful services platform on Kubernetes**: highly available PostgreSQL, a RabbitMQ cluster and Redis, with backups to S3-compatible storage, Prometheus alerting, Grafana dashboards, runbooks and tested failure recovery. It runs on a local 3-node kind cluster and in GitHub Actions.
+A production-style **stateful services platform on Kubernetes**: highly available PostgreSQL, a RabbitMQ cluster and Redis, with backups to S3-compatible storage (SeaweedFS), Prometheus alerting, Grafana dashboards, runbooks and tested failure recovery. It runs on a local 3-node kind cluster and in GitHub Actions.
 
 > **Personal lab project.** I built it to go deeper on running databases and message queues on Kubernetes, on top of my day job running AWS/Kubernetes platforms. Everything here is reproducible: `make up && make test`.
 
@@ -14,7 +14,7 @@ flowchart LR
     subgraph data["ns: data"]
       PG[(Postgres x3<br/>CloudNativePG<br/>primary + 2 replicas)]
       R[(Redis StatefulSet<br/>AOF + exporter)]
-      M[(MinIO<br/>S3 API)]
+      M[(SeaweedFS<br/>S3 API)]
     end
     subgraph messaging["ns: messaging"]
       MQ[[RabbitMQ x3<br/>quorum queues]]
@@ -36,7 +36,7 @@ flowchart LR
 | RabbitMQ 3.13 | RabbitMQ Cluster Operator, 3 nodes | Quorum queues (survive 1 node loss), `pause_minority` partition handling, memory watermark |
 | Redis 7.4 | Hand-written StatefulSet (no operator) | volumeClaimTemplates, headless Service, probes, AOF persistence, PodDisruptionBudget, exporter sidecar |
 | cert-manager | Helm | Issues the TLS certificates for the RabbitMQ operator's admission webhooks |
-| MinIO | Deployment + PVC | S3-compatible backup target (stands in for AWS S3) |
+| SeaweedFS | Deployment + PVC | S3-compatible backup target (stands in for AWS S3) |
 | Observability | kube-prometheus-stack | Alerts on replication lag, stale backups, queue backlog, memory alarm, Redis down/memory; each alert links a runbook |
 | IaC / CI | Makefile, Terraform (kind + Helm), GitHub Actions | Lint (yamllint, shellcheck, kubeconform, terraform validate) + full e2e on every push |
 
@@ -86,7 +86,7 @@ make down
 ```
 kind/          cluster config
 platform/      kube-prometheus-stack values, PrometheusRules
-manifests/     namespaces, minio, postgres (CNPG), rabbitmq, redis
+manifests/     namespaces, object-store (S3), postgres (CNPG), rabbitmq, redis
 scripts/       smoke test, restore drill, failover test
 runbooks/      on-call runbooks linked from alerts
 terraform/     kind cluster + Helm releases as IaC

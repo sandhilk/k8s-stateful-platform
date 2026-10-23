@@ -1,0 +1,91 @@
+# S3-compatible object store used as the Postgres backup target (stands in for AWS S3 locally).
+# SeaweedFS all-in-one: master + volume + filer + S3 gateway in a single pod.
+# (MinIO stopped publishing community container images, so this lab uses SeaweedFS.)
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-creds
+  namespace: data
+type: Opaque
+stringData:
+  ACCESS_KEY_ID: s3-local
+  ACCESS_SECRET_KEY: s3-local-secret-change-me
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: s3-data
+  namespace: data
+spec:
+  accessModes: [ReadWriteOnce]
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: s3
+  namespace: data
+  labels: { app: s3 }
+spec:
+  replicas: 1
+  strategy: { type: Recreate }
+  selector: { matchLabels: { app: s3 } }
+  template:
+    metadata: { labels: { app: s3 } }
+    spec:
+      containers:
+        - name: seaweedfs
+          image: chrislusf/seaweedfs:3.80
+          args:
+            - server
+            - -dir=/data
+            - -ip.bind=0.0.0.0
+            - -master.volumeSizeLimitMB=256
+            - -s3
+            - -s3.port=8333
+          ports:
+            - { name: s3, containerPort: 8333 }
+          readinessProbe:
+            tcpSocket: { port: 8333 }
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          volumeMounts:
+            - { name: data, mountPath: /data }
+      volumes:
+        - name: data
+          persistentVolumeClaim: { claimName: s3-data }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: s3
+  namespace: data
+spec:
+  selector: { app: s3 }
+  ports:
+    - { name: s3, port: 8333, targetPort: 8333 }
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: s3-create-bucket
+  namespace: data
+spec:
+  backoffLimit: 20
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: awscli
+          image: amazon/aws-cli:2.18.0
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              valueFrom: { secretKeyRef: { name: s3-creds, key: ACCESS_KEY_ID } }
+            - name: AWS_SECRET_ACCESS_KEY
+              valueFrom: { secretKeyRef: { name: s3-creds, key: ACCESS_SECRET_KEY } }
+            - { name: AWS_DEFAULT_REGION, value: us-east-1 }
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              aws --endpoint-url http://s3.data.svc:8333 s3api head-bucket --bucket pg-backups ||
+              aws --endpoint-url http://s3.data.svc:8333 s3 mb s3://pg-backups
