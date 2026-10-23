@@ -1,5 +1,5 @@
 # 3-instance PostgreSQL cluster managed by the CloudNativePG operator:
-# streaming replication, automated failover, WAL archiving and base backups to S3 (MinIO).
+# streaming replication, automated failover, WAL archiving and base backups to S3 (SeaweedFS).
 apiVersion: postgresql.cnpg.io/v1
 kind: Cluster
 metadata:
