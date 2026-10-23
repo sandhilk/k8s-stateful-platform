@@ -35,16 +35,17 @@ jobs:
           config: kind/cluster.yaml
           cluster_name: stateful-platform
       - name: deploy platform + data services
-        run: make deploy
+        run: ./scripts/ci-run.sh make deploy
       - name: smoke test
-        run: make test
+        run: ./scripts/ci-run.sh make test
       - name: backup / restore drill
-        run: make drill
+        run: ./scripts/ci-run.sh make drill
       - name: failover test
-        run: make chaos
+        run: ./scripts/ci-run.sh make chaos
       - name: debug on failure
         if: failure()
         run: |
+          ./scripts/ci-run.sh bash -c 'kubectl get pods -A; kubectl get events -A --sort-by=.lastTimestamp | tail -30; false' || true
           kubectl get pods -A
           kubectl -n data describe cluster pg-main || true
           kubectl get events -A --sort-by=.lastTimestamp | tail -50
