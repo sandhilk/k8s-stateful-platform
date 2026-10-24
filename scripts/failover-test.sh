@@ -10,6 +10,8 @@ echo "New primary $NEW after $(( $(date +%s) - START ))s"
 
 echo "Deleting RabbitMQ node mq-server-1"
 kubectl -n messaging delete pod mq-server-1
+# the StatefulSet recreates the pod; wait for it to exist before waiting for Ready
+for _ in $(seq 1 60); do kubectl -n messaging get pod mq-server-1 >/dev/null 2>&1 && break; sleep 2; done
 kubectl -n messaging wait --for=condition=Ready pod/mq-server-1 --timeout=300s
 kubectl -n messaging exec mq-server-0 -- rabbitmqctl list_queues name type messages
 echo "Failover test complete."
