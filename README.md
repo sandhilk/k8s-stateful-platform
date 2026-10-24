@@ -4,7 +4,9 @@ A production-style **stateful services platform on Kubernetes**: highly availabl
 
 > **Personal lab project.** I built it to go deeper on running databases and message queues on Kubernetes, on top of my day job running AWS/Kubernetes platforms. Everything here is reproducible: `make up && make test`.
 
-![ci](https://github.com/sandhilk/k8s-stateful-platform/actions/workflows/ci.yml/badge.svg)
+![ci](https://github.com/sandhilk/k8s-stateful-platform/actions/workflows/ci.yml/badge.svg) ![license](https://img.shields.io/badge/license-MIT-blue)
+
+![Architecture: Postgres x3, RabbitMQ x3, Redis, S3 backups and monitoring on a kind cluster, with 4s failover and 34s restore measured in CI](docs/architecture.png)
 
 ## Architecture
 
